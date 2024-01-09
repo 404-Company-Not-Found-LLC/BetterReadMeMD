@@ -1,45 +1,42 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from 'react'
-
-import BlockquoteBtn from './components/buttons/BlockquoteBtn'
-import BoldBtn from './components/buttons/BoldBtn'
-import CodeBtn from './components/buttons/codeBtn'
-import CodeblockBtn from './components/buttons/CodeblockBtn'
-import EmojiBtn from './components/buttons/emojiBtn'
-import HeaderBtn from './components/buttons/HeaderBtn'
-import ImageBtn from './components/buttons/ImageBtn'
-import ItalicsBtn from './components/buttons/ItalicsBtn'
-import ListBtn from './components/buttons/ListBtn'
-import LinkBtn from './components/buttons/LinkBtn'
-import TasklistBtn from './components/buttons/tasklistBtn'
-import TableBtn from './components/buttons/tableBtn'
-import FootnoteBtn from './components/buttons/footnoteBtn'
-
 import Markdownrender from './components/Markdownrender'
+import Popup from './components/Popup'
 
 function Layout() {
   //const [markdown, setMarkdown] = useState('')
   const [markdown, setMarkdown] = useState('## Hello Markdown\nThis is a test.')
+  const [activePopup, setActivePopup] = useState(null)
+
+  const openPopup = (type) => {
+    setActivePopup(type)
+  }
+
+  const closePopup = () => {
+    setActivePopup(null)
+  }
 
   return (
     <div className="layout">
       <div className="button-container">
-        <BlockquoteBtn />
-        <BoldBtn />
-        <CodeBtn />
-        <CodeblockBtn />
-        <EmojiBtn />
-        <HeaderBtn />
-        <ImageBtn />
-        <ItalicsBtn />
-        <ListBtn />
-        <LinkBtn />
-        <TasklistBtn />
-        <TableBtn />
-        <FootnoteBtn />
+        <button onClick={() => openPopup('codeblock')}>CodeblockBtn</button>
+        <button onClick={() => openPopup('blockquote')}>BlockquoteBtn</button>
+        <button onClick={() => openPopup('bold')}>BoldBtn</button>
+        <button onClick={() => openPopup('italics')}>ItalicsBtn</button>
+        <button onClick={() => openPopup('link')}>LinkBtn</button>
+        <button onClick={() => openPopup('image')}>ImageBtn</button>
+        <button onClick={() => openPopup('code')}>CodeBtn</button>
+        <button onClick={() => openPopup('header')}>HeaderBtn</button>
+        <button onClick={() => openPopup('list')}>ListBtn</button>
+        <button onClick={() => openPopup('tasklist')}>TasklistBtn</button>
+        <button onClick={() => openPopup('table')}>TableBtn</button>
+        <button onClick={() => openPopup('footnote')}>FootnoteBtn</button>
+        <button onClick={() => openPopup('emoji')}>EmojiBtn</button>
       </div>
       <div className="markdown-container">
         <Markdownrender markdown={markdown} />
       </div>
+      {activePopup && <Popup type={activePopup} onClose={closePopup} />}
     </div>
   )
 }

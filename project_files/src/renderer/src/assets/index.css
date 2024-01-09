@@ -16,6 +16,32 @@ body {
   background-color: #2f3241;
 }
 
+.popup {
+  position: fixed;   /* Fixed position to stay in place */
+  top: 50%;          /* Center vertically */
+  left: 50%;         /* Center horizontally */
+  transform: translate(-50%, -50%); /* Adjust for exact centering */
+  width: auto;       /* Auto width or specify a fixed width */
+  max-width: 90%;    /* Maximum width */
+  padding: 20px;     /* Padding inside the popup */
+  background-color: white; /* Background color */
+  border: 1px solid #ddd; /* Border for the popup */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: adds shadow for better visibility */
+  z-index: 1000;     /* High z-index to ensure it's above other elements */
+}
+
+/* Additional styling for backdrop (optional) */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+  z-index: 999;     /* Just below the popup */
+}
+
+
 .a4-page {
   width: 210mm; /* A4 width */
   height: 297mm; /* A4 height */

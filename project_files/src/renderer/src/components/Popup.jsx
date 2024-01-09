@@ -3,7 +3,14 @@ function Popup({ type, onClose }) {
 
   switch (type) {
     case 'codeblock':
-      content = <div>Form fields for Codeblock</div>
+      content = (
+        <div>
+          Form fields for Codeblock
+          <form>
+            <input></input>
+          </form>
+        </div>
+      )
       break
     case 'blockquote':
       content = <div>Form fields for Blockquote</div>

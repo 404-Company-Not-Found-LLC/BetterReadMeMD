@@ -49,6 +49,16 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  try {
+    require('electron-reloader')(module, {
+      watchRenderer: true
+      // You can add more options here if needed
+    })
+  } catch (_) {
+    console.log('Error in electron-reloader')
+  }
+
+
   createWindow()
 
   app.on('activate', function () {

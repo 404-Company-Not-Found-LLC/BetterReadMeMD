@@ -5,7 +5,7 @@ import Popup from './components/Popup'
 
 function Layout() {
   //const [markdown, setMarkdown] = useState('')
-  const [markdown, setMarkdown] = useState('## Hello Markdown\nThis is a test.')
+  const [markdown, setMarkdown] = useState('## This is Markdown\nThis is a test.')
   const [activePopup, setActivePopup] = useState(null)
 
   const openPopup = (type) => {

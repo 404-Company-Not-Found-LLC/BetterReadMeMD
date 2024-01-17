@@ -48,32 +48,74 @@ const DroppableArea = ({ onDropItem, items, itemType, className }) => {
   )
 }
 
+const Bin = ({ onDropToBin }) => {
+  const [, dropRef] = useDrop({
+    accept: 'droppedItem',
+    drop: (item, monitor) => {
+      onDropToBin(item.id)
+    }
+  })
+
+  return (
+    <div
+      ref={dropRef}
+      className="border-2 border-dashed border-red-500 p-2 text-center text-red-500 mt-2"
+    >
+      Drag here to delete
+    </div>
+  )
+}
+
 function Layout() {
   const [rightItems, setRightItems] = useState([])
   const [markdownContent, setMarkdownContent] = useState('')
 
   const handleDrop = (droppedItem, targetType) => {
     if (targetType === 'droppedItem') {
-      // Copy item to the right
-      setRightItems((prevRight) => [...prevRight, { ...droppedItem, id: `dropped-${Date.now()}` }])
-      setMarkdownContent(droppedItem.content) // Update Markdown view
+      // Add the new item to the rightItems list
+      const newRightItems = [...rightItems, { ...droppedItem, id: `dropped-${Date.now()}` }]
+
+      // Update the rightItems state
+      setRightItems(newRightItems)
+
+      // Update the markdownContent to include all items in the rightItems list
+      const newMarkdownContent = newRightItems.map((item) => item.content).join('\n')
+      setMarkdownContent(newMarkdownContent)
     }
+  }
+
+  const handleDropToBin = (itemId) => {
+    // Remove the item from rightItems
+    const updatedItems = rightItems.filter((item) => item.id !== itemId)
+    setRightItems(updatedItems)
+
+    // Update the markdown content
+    const newMarkdownContent = updatedItems.map((item) => item.content).join('\n')
+    setMarkdownContent(newMarkdownContent)
   }
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex h-screen">
+        {/* Drag Area */}
         <div className="w-1/5 bg-gray-100 p-4">
           {initialItems.map((item) => (
             <DraggableItem key={item.id} item={item} itemType="item" />
           ))}
         </div>
-        <DroppableArea
-          onDropItem={handleDrop}
-          items={rightItems}
-          itemType="droppedItem"
-          className="w-1/5 bg-gray-200 p-4"
-        />
+
+        {/* Drop Area and Bin Area */}
+        <div className="flex flex-col w-1/5 bg-gray-200 p-4">
+          <DroppableArea
+            onDropItem={handleDrop}
+            items={rightItems}
+            itemType="droppedItem"
+            className="flex-grow"
+          />
+          <Bin onDropToBin={handleDropToBin} className="mt-auto" />
+        </div>
+
+        {/* Markdown Area */}
         <div className="w-3/5 bg-gray-300 p-4">
           <Markdownrender markdown={markdownContent} />
         </div>

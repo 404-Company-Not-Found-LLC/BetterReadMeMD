@@ -7,9 +7,9 @@ import 'tailwindcss/tailwind.css'
 import Markdownrender from './components/Markdownrender' // Import your Markdown render component
 
 const initialItems = [
-  { id: 'item-1', content: 'Item 1' },
-  { id: 'item-2', content: 'Item 2' },
-  { id: 'item-3', content: 'Item 3' }
+  { id: 'item-1', content: 'Item 1', type: 'type1' },
+  { id: 'item-2', content: 'Item 2', type: 'type2' },
+  { id: 'item-3', content: 'Item 3', type: 'type3' }
 ]
 
 const DraggableItem = ({ item, itemType, onClick }) => {
@@ -78,8 +78,16 @@ function Layout() {
 
   const handleDrop = (droppedItem, targetType) => {
     if (targetType === 'droppedItem') {
-      // Add the new item to the rightItems list
-      const newRightItems = [...rightItems, { ...droppedItem, id: `dropped-${Date.now()}` }]
+      // Find the original item to get its type
+      const originalItem = initialItems.find((item) => item.id === droppedItem.id)
+
+      // Add the new item to the rightItems list with the correct type
+      const newItem = {
+        ...droppedItem,
+        id: `dropped-${Date.now()}`,
+        type: originalItem ? originalItem.type : droppedItem.type // Use the original item's type
+      }
+      const newRightItems = [...rightItems, newItem]
 
       // Update the rightItems state
       setRightItems(newRightItems)
@@ -101,27 +109,140 @@ function Layout() {
   }
 
   const handleItemClick = (item) => {
+    console.log('itemType:', item.type)
     setSelectedItem(item)
     // Set the form to be shown if needed
   }
 
-  const MyForm = () => {
+  const renderForm = (selectedItem) => {
+    const commonProps = {
+      onSubmit: handleFormSubmit,
+      selectedItem: selectedItem // Pass the selected item to the form
+    }
+
+    switch (
+      selectedItem.type // Use selectedItem.template here
+    ) {
+      case 'type1':
+        return <FormType1 {...commonProps} />
+      case 'type2':
+        return <FormType2 {...commonProps} />
+      case 'type3':
+        return <FormType3 {...commonProps} />
+      default:
+        return null
+    }
+  }
+  const handleFormSubmit = (itemId, newContent) => {
+    const updatedItems = rightItems.map((item) => {
+      if (item.id === itemId) {
+        return { ...item, content: newContent }
+      }
+      return item
+    })
+    setRightItems(updatedItems)
+    setMarkdownContent(updatedItems.map((item) => item.content).join('\n'))
+    setSelectedItem(null) // Hide the form after submission
+  }
+
+  const FormType1 = ({ selectedItem, onSubmit }) => {
+    const [inputValue, setInputValue] = useState(selectedItem.content)
+
+    const handleSubmit = (e) => {
+      e.preventDefault()
+      onSubmit(selectedItem.id, inputValue)
+    }
+
     return (
       <div className="p-4 border rounded">
-        <form>
-          {/* Your form fields go here */}
+        <form onSubmit={handleSubmit}>
           <div>
             <label htmlFor="inputField" className="block text-sm font-medium text-gray-700">
-              Input
+              Edit Content
             </label>
             <input
               type="text"
               id="inputField"
               name="inputField"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               className="mt-1 block w-full border border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             />
           </div>
-          {/* Add more form fields as needed */}
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  const FormType2 = ({ selectedItem, onSubmit }) => {
+    const [inputValue, setInputValue] = useState(selectedItem.content)
+
+    const handleSubmit = (e) => {
+      e.preventDefault()
+      onSubmit(selectedItem.id, inputValue)
+    }
+
+    return (
+      <div className="p-4 border rounded">
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="inputField" className="block text-sm font-medium text-gray-700">
+              Edit Content
+            </label>
+            <input
+              type="text"
+              id="inputField"
+              name="inputField"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            />
+          </div>
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  const FormType3 = ({ selectedItem, onSubmit }) => {
+    const [inputValue, setInputValue] = useState(selectedItem.content)
+
+    const handleSubmit = (e) => {
+      e.preventDefault()
+      onSubmit(selectedItem.id, inputValue)
+    }
+
+    return (
+      <div className="p-4 border rounded">
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="inputField" className="block text-sm font-medium text-gray-700">
+              Edit Content
+            </label>
+            <input
+              type="text"
+              id="inputField"
+              name="inputField"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            />
+          </div>
           <div className="mt-4">
             <button
               type="submit"
@@ -166,7 +287,7 @@ function Layout() {
           <Bin onDropToBin={handleDropToBin} className="mt-auto" />
         </div>
 
-        {selectedItem && <MyForm selectedItem={selectedItem} />}
+        {selectedItem && renderForm(selectedItem)}
 
         {/* Markdown Area */}
         <div className="w-3/5 bg-gray-300 p-4">

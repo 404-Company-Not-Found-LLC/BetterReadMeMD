@@ -12,7 +12,7 @@ const initialItems = [
   { id: 'item-3', content: 'Item 3' }
 ]
 
-const DraggableItem = ({ item, itemType }) => {
+const DraggableItem = ({ item, itemType, onClick }) => {
   const [{ isDragging }, dragRef] = useDrag(() => ({
     type: itemType,
     item: { id: item.id, type: itemType, content: item.content },
@@ -21,17 +21,22 @@ const DraggableItem = ({ item, itemType }) => {
     })
   }))
 
+  const handleClick = () => {
+    if (onClick) onClick(item)
+  }
+
   return (
     <div
       ref={dragRef}
       className={`p-2 mb-2 bg-white border rounded shadow-sm ${isDragging ? 'opacity-50' : ''}`}
+      onClick={handleClick}
     >
       {item.content}
     </div>
   )
 }
 
-const DroppableArea = ({ onDropItem, items, itemType, className }) => {
+const DroppableArea = ({ onDropItem, items, itemType, className, onItemClick }) => {
   const [, dropRef] = useDrop({
     accept: itemType === 'item' ? 'droppedItem' : 'item',
     drop: (item, monitor) => {
@@ -42,7 +47,7 @@ const DroppableArea = ({ onDropItem, items, itemType, className }) => {
   return (
     <div ref={dropRef} className={className}>
       {items.map((item) => (
-        <DraggableItem key={item.id} item={item} itemType={itemType} />
+        <DraggableItem key={item.id} item={item} itemType={itemType} onClick={onItemClick} />
       ))}
     </div>
   )
@@ -69,6 +74,7 @@ const Bin = ({ onDropToBin }) => {
 function Layout() {
   const [rightItems, setRightItems] = useState([])
   const [markdownContent, setMarkdownContent] = useState('')
+  const [selectedItem, setSelectedItem] = useState(null)
 
   const handleDrop = (droppedItem, targetType) => {
     if (targetType === 'droppedItem') {
@@ -94,6 +100,41 @@ function Layout() {
     setMarkdownContent(newMarkdownContent)
   }
 
+  const handleItemClick = (item) => {
+    setSelectedItem(item)
+    // Set the form to be shown if needed
+  }
+
+  const MyForm = () => {
+    return (
+      <div className="p-4 border rounded">
+        <form>
+          {/* Your form fields go here */}
+          <div>
+            <label htmlFor="inputField" className="block text-sm font-medium text-gray-700">
+              Input
+            </label>
+            <input
+              type="text"
+              id="inputField"
+              name="inputField"
+              className="mt-1 block w-full border border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            />
+          </div>
+          {/* Add more form fields as needed */}
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex h-screen">
@@ -111,9 +152,21 @@ function Layout() {
             items={rightItems}
             itemType="droppedItem"
             className="flex-grow"
-          />
+            onItemClick={handleItemClick}
+          >
+            {rightItems.map((item) => (
+              <DraggableItem
+                key={item.id}
+                item={item}
+                itemType="droppedItem"
+                onClick={handleItemClick}
+              />
+            ))}
+          </DroppableArea>
           <Bin onDropToBin={handleDropToBin} className="mt-auto" />
         </div>
+
+        {selectedItem && <MyForm selectedItem={selectedItem} />}
 
         {/* Markdown Area */}
         <div className="w-3/5 bg-gray-300 p-4">

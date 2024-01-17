@@ -49,19 +49,13 @@ const DroppableArea = ({ onDropItem, items, itemType, className }) => {
 }
 
 function Layout() {
-  const [leftItems, setLeftItems] = useState(initialItems)
   const [rightItems, setRightItems] = useState([])
   const [markdownContent, setMarkdownContent] = useState('')
 
   const handleDrop = (droppedItem, targetType) => {
-    if (targetType === 'item') {
-      // Move item from right to left
-      setRightItems((prevItems) => prevItems.filter((item) => item.id !== droppedItem.id))
-      setLeftItems((prevLeft) => [...prevLeft, droppedItem])
-    } else {
-      // Move item from left to right
-      setLeftItems((prevItems) => prevItems.filter((item) => item.id !== droppedItem.id))
-      setRightItems((prevRight) => [...prevRight, droppedItem])
+    if (targetType === 'droppedItem') {
+      // Copy item to the right
+      setRightItems((prevRight) => [...prevRight, { ...droppedItem, id: `dropped-${Date.now()}` }])
       setMarkdownContent(droppedItem.content) // Update Markdown view
     }
   }
@@ -69,12 +63,11 @@ function Layout() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex h-screen">
-        <DroppableArea
-          onDropItem={handleDrop}
-          items={leftItems}
-          itemType="item"
-          className="w-1/5 bg-gray-100 p-4"
-        />
+        <div className="w-1/5 bg-gray-100 p-4">
+          {initialItems.map((item) => (
+            <DraggableItem key={item.id} item={item} itemType="item" />
+          ))}
+        </div>
         <DroppableArea
           onDropItem={handleDrop}
           items={rightItems}

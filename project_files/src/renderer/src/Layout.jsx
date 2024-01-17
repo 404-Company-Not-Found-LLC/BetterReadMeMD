@@ -98,7 +98,7 @@ function Layout() {
       setMarkdownContent(newMarkdownContent)
     }
   }
-
+ 
   const handleDropToBin = (itemId) => {
     // Remove the item from rightItems
     const updatedItems = rightItems.filter((item) => item.id !== itemId)
@@ -111,6 +111,8 @@ function Layout() {
 
   const handleItemClick = (item) => {
     console.log('itemType:', item.type)
+    console.log('item:', item)
+
     setSelectedItem(item)
     // Set the form to be shown if needed
   }

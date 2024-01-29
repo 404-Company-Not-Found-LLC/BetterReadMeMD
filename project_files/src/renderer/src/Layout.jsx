@@ -8,7 +8,9 @@ import Markdown from './components/Markdownrender' // Import your Markdown compo
 import { v4 as uuidv4 } from 'uuid' // npm install uuid
 import 'tailwindcss/tailwind.css'
 
-const initialButtons = ['Item 1', 'Item 2', 'Item 3']
+const initialButtons = ['Heading', 'Code', 'Item 3']
+// # Heading 1
+// `code`
 const ItemTypes = { CARD: 'card' }
 
 const DraggableItem = ({ id, content, index, moveCard }) => {
@@ -163,6 +165,8 @@ function Layout() {
           <Markdown content={renderMarkdownContent()} />
         </div>
       </div>
+
+      {/* Item Form */}
       <ItemForm
         show={showForm}
         onClose={handleCloseForm}

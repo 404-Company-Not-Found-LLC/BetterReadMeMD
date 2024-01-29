@@ -1,302 +1,174 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import update from 'immutability-helper' // npm install immutability-helper
+import Markdown from './components/Markdownrender' // Import your Markdown component
+import { v4 as uuidv4 } from 'uuid' // npm install uuid
 import 'tailwindcss/tailwind.css'
-import Markdownrender from './components/Markdownrender' // Import your Markdown render component
 
-const initialItems = [
-  { id: 'item-1', content: 'Item 1', type: 'type1' },
-  { id: 'item-2', content: 'Item 2', type: 'type2' },
-  { id: 'item-3', content: 'Item 3', type: 'type3' }
-]
+const initialButtons = ['Item 1', 'Item 2', 'Item 3']
+const ItemTypes = { CARD: 'card' }
 
-const DraggableItem = ({ item, itemType, onClick }) => {
-  const [{ isDragging }, dragRef] = useDrag(() => ({
-    type: itemType,
-    item: { id: item.id, type: itemType, content: item.content },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging()
-    })
-  }))
+const DraggableItem = ({ id, content, index, moveCard }) => {
+  const [, drag] = useDrag({
+    type: ItemTypes.CARD,
+    item: { id, index }
+  })
 
-  const handleClick = () => {
-    if (onClick) onClick(item)
+  const [, drop] = useDrop({
+    accept: ItemTypes.CARD,
+    hover(item, monitor) {
+      if (item.index !== index) {
+        moveCard(item.index, index)
+        item.index = index
+      }
+    }
+  })
+
+  return (
+    <div ref={(node) => drag(drop(node))} className="p-2 bg-gray-300 rounded">
+      {content}
+    </div>
+  )
+}
+
+const ItemForm = ({ show, onSubmit, onClose, defaultValue }) => {
+  const [value, setValue] = useState('')
+
+  useEffect(() => {
+    if (show) {
+      setValue(defaultValue)
+    }
+  }, [show, defaultValue])
+
+  if (!show) {
+    return null
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onSubmit(value)
+    onClose() // Close form after submit
   }
 
   return (
-    <div
-      ref={dragRef}
-      className={`p-2 mb-2 bg-white border rounded shadow-sm ${isDragging ? 'opacity-50' : ''}`}
-      onClick={handleClick}
-    >
-      {item.content}
-    </div>
-  )
-}
-
-const DroppableArea = ({ onDropItem, items, itemType, className, onItemClick }) => {
-  const [, dropRef] = useDrop({
-    accept: itemType === 'item' ? 'droppedItem' : 'item',
-    drop: (item, monitor) => {
-      onDropItem(item, itemType)
-    }
-  })
-
-  return (
-    <div ref={dropRef} className={className}>
-      {items.map((item) => (
-        <DraggableItem key={item.id} item={item} itemType={itemType} onClick={onItemClick} />
-      ))}
-    </div>
-  )
-}
-
-const Bin = ({ onDropToBin }) => {
-  const [, dropRef] = useDrop({
-    accept: 'droppedItem',
-    drop: (item, monitor) => {
-      onDropToBin(item.id)
-    }
-  })
-
-  return (
-    <div
-      ref={dropRef}
-      className="border-2 border-dashed border-red-500 p-2 text-center text-red-500 mt-2"
-    >
-      Drag here to delete
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center">
+      <div className="bg-white p-4 rounded">
+        <form onSubmit={handleSubmit}>
+          <textarea
+            className="w-full p-2 border border-gray-300"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Submit
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
 
 function Layout() {
-  const [rightItems, setRightItems] = useState([])
-  const [markdownContent, setMarkdownContent] = useState('')
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [items, setItems] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [selectedItemId, setSelectedItemId] = useState(null)
+  const [markdownMap, setMarkdownMap] = useState({}) // Maps item IDs to markdown content
 
-  const handleDrop = (droppedItem, targetType) => {
-    if (targetType === 'droppedItem') {
-      // Find the original item to get its type
-      const originalItem = initialItems.find((item) => item.id === droppedItem.id)
+  // Find the markdown content for the selected item
+  const selectedItemContent = items.find((item) => item.id === selectedItemId)?.content || ''
 
-      // Add the new item to the rightItems list with the correct type
-      const newItem = {
-        ...droppedItem,
-        id: `dropped-${Date.now()}`,
-        type: originalItem ? originalItem.type : droppedItem.type // Use the original item's type
-      }
-      const newRightItems = [...rightItems, newItem]
+  const handleItemClick = (id) => {
+    setSelectedItemId(id)
+    setShowForm(true)
+  }
 
-      // Update the rightItems state
-      setRightItems(newRightItems)
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setSelectedItemId(null)
+  }
 
-      // Update the markdownContent to include all items in the rightItems list
-      const newMarkdownContent = newRightItems.map((item) => item.content).join('\n')
-      setMarkdownContent(newMarkdownContent)
+  const handleFormSubmit = (content) => {
+    setMarkdownMap((prevMarkdownMap) => ({
+      ...prevMarkdownMap,
+      [selectedItemId]: content
+    }))
+    handleCloseForm() // Close form after submit
+  }
+
+  const handleButtonClick = (buttonLabel) => {
+    const newItem = {
+      id: uuidv4(), // Generate a unique ID for each item
+      content: buttonLabel
     }
-  }
- 
-  const handleDropToBin = (itemId) => {
-    // Remove the item from rightItems
-    const updatedItems = rightItems.filter((item) => item.id !== itemId)
-    setRightItems(updatedItems)
-
-    // Update the markdown content
-    const newMarkdownContent = updatedItems.map((item) => item.content).join('\n')
-    setMarkdownContent(newMarkdownContent)
+    setItems([...items, newItem])
   }
 
-  const handleItemClick = (item) => {
-    console.log('itemType:', item.type)
-    console.log('item:', item)
-
-    setSelectedItem(item)
-    // Set the form to be shown if needed
-  }
-
-  const renderForm = (selectedItem) => {
-    const commonProps = {
-      onSubmit: handleFormSubmit,
-      selectedItem: selectedItem // Pass the selected item to the form
-    }
-
-    switch (
-      selectedItem.type // Use selectedItem.template here
-    ) {
-      case 'type1':
-        return <FormType1 {...commonProps} />
-      case 'type2':
-        return <FormType2 {...commonProps} />
-      case 'type3':
-        return <FormType3 {...commonProps} />
-      default:
-        return null
-    }
-  }
-  const handleFormSubmit = (itemId, newContent) => {
-    const updatedItems = rightItems.map((item) => {
-      if (item.id === itemId) {
-        return { ...item, content: newContent }
-      }
-      return item
-    })
-    setRightItems(updatedItems)
-    setMarkdownContent(updatedItems.map((item) => item.content).join('\n'))
-    setSelectedItem(null) // Hide the form after submission
-  }
-
-  const FormType1 = ({ selectedItem, onSubmit }) => {
-    const [inputValue, setInputValue] = useState(selectedItem.content)
-
-    const handleSubmit = (e) => {
-      e.preventDefault()
-      onSubmit(selectedItem.id, inputValue)
-    }
-
-    return (
-      <div className="p-4 border rounded">
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="inputField" className="block text-sm font-medium text-gray-700">
-              Edit Content
-            </label>
-            <input
-              type="text"
-              id="inputField"
-              name="inputField"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            />
-          </div>
-          <div className="mt-4">
-            <button
-              type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
-      </div>
+  const moveCard = (dragIndex, hoverIndex) => {
+    const dragItem = items[dragIndex]
+    setItems(
+      update(items, {
+        $splice: [
+          [dragIndex, 1],
+          [hoverIndex, 0, dragItem]
+        ]
+      })
     )
   }
 
-  const FormType2 = ({ selectedItem, onSubmit }) => {
-    const [inputValue, setInputValue] = useState(selectedItem.content)
+  const renderButtons = () => (
+    <div className="flex flex-col space-y-2">
+      {initialButtons.map((buttonLabel, index) => (
+        <button
+          key={index}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={() => handleButtonClick(buttonLabel)}
+        >
+          {buttonLabel}
+        </button>
+      ))}
+    </div>
+  )
 
-    const handleSubmit = (e) => {
-      e.preventDefault()
-      onSubmit(selectedItem.id, inputValue)
-    }
-
-    return (
-      <div className="p-4 border rounded">
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="inputField" className="block text-sm font-medium text-gray-700">
-              Edit Content
-            </label>
-            <input
-              type="text"
-              id="inputField"
-              name="inputField"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            />
-          </div>
-          <div className="mt-4">
-            <button
-              type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
-      </div>
-    )
+  const renderMarkdownContent = () => {
+    return items.map((item) => markdownMap[item.id] || item.content).join('\n')
   }
 
-  const FormType3 = ({ selectedItem, onSubmit }) => {
-    const [inputValue, setInputValue] = useState(selectedItem.content)
-
-    const handleSubmit = (e) => {
-      e.preventDefault()
-      onSubmit(selectedItem.id, inputValue)
-    }
-
-    return (
-      <div className="p-4 border rounded">
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="inputField" className="block text-sm font-medium text-gray-700">
-              Edit Content
-            </label>
-            <input
-              type="text"
-              id="inputField"
-              name="inputField"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            />
-          </div>
-          <div className="mt-4">
-            <button
-              type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
-      </div>
-    )
-  }
+  const renderDraggableItems = () => (
+    <div className="space-y-2">
+      {items.map((item, index) => (
+        <div onClick={() => handleItemClick(item.id)} key={item.id}>
+          <DraggableItem id={item.id} content={item.content} index={index} moveCard={moveCard} />
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex h-screen">
-        {/* Drag Area */}
-        <div className="w-1/5 bg-gray-100 p-4">
-          {initialItems.map((item) => (
-            <DraggableItem key={item.id} item={item} itemType="item" />
-          ))}
-        </div>
+        {/* Button Area */}
+        <div className="w-1/6 p-4">{renderButtons()}</div>
 
-        {/* Drop Area and Bin Area */}
-        <div className="flex flex-col w-1/5 bg-gray-200 p-4">
-          <DroppableArea
-            onDropItem={handleDrop}
-            items={rightItems}
-            itemType="droppedItem"
-            className="flex-grow"
-            onItemClick={handleItemClick}
-          >
-            {rightItems.map((item) => (
-              <DraggableItem
-                key={item.id}
-                item={item}
-                itemType="droppedItem"
-                onClick={handleItemClick}
-              />
-            ))}
-          </DroppableArea>
-          <Bin onDropToBin={handleDropToBin} className="mt-auto" />
-        </div>
+        {/* Draggable Items Area */}
+        <div className="w-1/3 bg-gray-200 p-4">{renderDraggableItems()}</div>
 
-        {selectedItem && renderForm(selectedItem)}
-
-        {/* Markdown Area */}
-        <div className="w-3/5 bg-gray-300 p-4">
-          <Markdownrender markdown={markdownContent} />
+        {/* Markdown Display Area */}
+        <div className="w-1/2 bg-gray-300 p-4">
+          <Markdown content={renderMarkdownContent()} />
         </div>
       </div>
+      <ItemForm
+        show={showForm}
+        onClose={handleCloseForm}
+        onSubmit={handleFormSubmit}
+        defaultValue={selectedItemContent}
+      />
     </DndProvider>
   )
 }

@@ -2,11 +2,11 @@
 /* eslint-disable react/prop-types */
 
 import React from 'react'
-import { marked } from 'marked'
 
-function Markdownrender({ markdown }) {
-  const htmlContent = marked(markdown)
-  return <div className="a4-page" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+const Markdown = ({ content }) => {
+  // Render markdown content. You can use a library like 'marked' for markdown rendering
+  return <div dangerouslySetInnerHTML={{ __html: content }} />
 }
 
-export default Markdownrender
+export default Markdown
+
